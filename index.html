@@ -9,7 +9,10 @@
 <body>
     <div class="container">
         <header>
-            <h1>⚽ Football Academy</h1>
+            <div class="logo-container">
+                <img src="logo.svg" alt="John Zone Logo" class="academy-logo">
+            </div>
+            <h1>John Zone Football Academy</h1>
             <p>Member & Payment Manager</p>
         </header>
 
@@ -28,8 +31,9 @@
             <h2>Add New Member</h2>
             <form id="member-form">
                 <input type="text" id="member-name" placeholder="Member Name" required>
+                <input type="tel" id="member-phone" placeholder="Phone Number (for WhatsApp)" required>
                 <input type="date" id="join-date" required>
-                <input type="number" id="monthly-fee" placeholder="Monthly Fee" required>
+                <input type="number" id="monthly-fee" placeholder="Monthly Fee ($)" required>
                 <button type="submit">Add Member</button>
             </form>
         </div>

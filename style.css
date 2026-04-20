@@ -26,10 +26,19 @@ header {
     box-shadow: 0 8px 32px rgba(0,0,0,0.1);
 }
 
+.logo-container {
+    margin-bottom: 15px;
+}
+
+.academy-logo {
+    height: 80px;
+    width: auto;
+}
+
 header h1 {
     color: #1e3c72;
     margin-bottom: 5px;
-    font-size: 28px;
+    font-size: 24px;
 }
 
 header p {
@@ -180,6 +189,10 @@ button:hover {
 
 .btn-danger {
     background: #dc3545;
+}
+
+.btn-warning {
+    background: #25D366;
 }
 
 .reminder-badge {

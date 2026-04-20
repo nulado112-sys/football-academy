@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <!-- John Zone Logo Recreation -->
+  <!-- Stadium/Field at top -->
+  <g fill="#5cb85c" transform="translate(100, 20)">
+    <rect x="0" y="0" width="200" height="80" rx="10" fill="none" stroke="#5cb85c" stroke-width="8"/>
+    <rect x="20" y="10" width="160" height="60" rx="5" fill="none" stroke="#5cb85c" stroke-width="4"/>
+    <circle cx="100" cy="40" r="25" fill="white"/>
+    <circle cx="100" cy="40" r="20" fill="none" stroke="#5cb85c" stroke-width="3"/>
+    <line x1="100" y1="0" x2="100" y2="80" stroke="#5cb85c" stroke-width="3"/>
+  </g>
+  
+  <!-- JOHN text -->
+  <text x="200" y="150" font-family="Arial Black, sans-serif" font-size="48" font-weight="900" text-anchor="middle" fill="#5cb85c">JOHN</text>
+  
+  <!-- ZONE text with football -->
+  <g>
+    <text x="200" y="220" font-family="Arial Black, sans-serif" font-size="48" font-weight="900" text-anchor="middle" fill="#5cb85c">ZONE</text>
+    <!-- Football in the O -->
+    <circle cx="165" cy="205" r="18" fill="white" stroke="#5cb85c" stroke-width="2"/>
+    <path d="M 150 205 L 180 205 M 157 195 L 173 215 M 157 215 L 173 195 M 147 200 L 183 210 M 147 210 L 183 200" stroke="#5cb85c" stroke-width="2" fill="none"/>
+  </g>
+</svg>
