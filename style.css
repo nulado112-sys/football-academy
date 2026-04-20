@@ -208,6 +208,15 @@ button {
     animation: pulse 2s infinite;
 }
 
+/* Disable animations on home screen apps for better performance */
+@media (display-mode: standalone) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
 /* Simplified animation for better mobile performance */
 @keyframes pulse {
     0%, 100% { opacity: 1; }

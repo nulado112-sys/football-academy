@@ -37,15 +37,20 @@ class FootballAcademy {
         this.checkPaymentReminders();
         this.checkDailyPaymentDues(); // Check for daily dues on app load
         
-        // Check for reminders every 30 minutes (reduced frequency)
+        // Reduce frequency for better mobile performance
+        // Check reminders only every 2 hours when app is home screen
+        const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
+        const reminderInterval = isStandalone ? 7200000 : 1800000; // 2 hours vs 30 min
+        
         setInterval(() => {
             this.checkPaymentReminders();
-        }, 1800000);
+        }, reminderInterval);
         
-        // Daily check for due payments (runs every hour but only notifies once per day)
+        // Daily check - less frequent on mobile
+        const dailyInterval = isStandalone ? 21600000 : 3600000; // 6 hours vs 1 hour
         setInterval(() => {
             this.checkDailyPaymentDues();
-        }, 3600000);
+        }, dailyInterval);
     }
 
     setupEventListeners() {
@@ -186,8 +191,11 @@ class FootballAcademy {
             return;
         }
 
-        // Use DocumentFragment for better performance
+        // Use DocumentFragment for better performance  
         const fragment = document.createDocumentFragment();
+        
+        // Limit DOM updates for mobile performance
+        const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
         
         this.members.forEach(member => {
             const status = this.getPaymentStatus(member);
@@ -220,11 +228,33 @@ class FootballAcademy {
                     break;
             }
 
-            // Create member card element directly (faster than innerHTML)
+            // Simplified rendering for mobile performance
             const card = document.createElement('div');
             card.className = 'member-card';
             
-            card.innerHTML = `
+            // Minimal information for mobile
+            const simpleHTML = `
+                <div class="member-header">
+                    <span class="member-name">${member.name}</span>
+                    <span class="payment-status ${statusClass}">${statusText}</span>
+                </div>
+                <div class="member-details">
+                    <div>${member.phone}</div>
+                    <div>$${member.monthlyFee} ${statusMessage}</div>
+                </div>
+                <div class="payment-actions">
+                    ${status.status !== 'paid' ? 
+                        `<button class="btn-small btn-success" onclick="academy.markAsPaid(${member.id})">✅</button>` : 
+                        ''
+                    }
+                    ${status.status === 'overdue' || (status.status === 'pending' && status.daysUntilNext <= 1) ? 
+                        `<button class="btn-small btn-warning" onclick="academy.sendWhatsAppReminder(${member.id})">📱</button>` : 
+                        ''
+                    }
+                </div>
+            `;
+            
+            card.innerHTML = isStandalone ? simpleHTML : `
                 <div class="member-header">
                     <span class="member-name">${member.name}</span>
                     <span class="payment-status ${statusClass}">${statusText}</span>
