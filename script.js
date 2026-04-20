@@ -442,7 +442,7 @@ class FootballAcademy {
         if (members.length === 0) {
             const demoMember = {
                 id: 999999,
-                name: "Ahmed Demo",
+                name: "Jhony Moussa",
                 phone: "+96171982549",
                 joinDate: new Date(Date.now() - 35 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 35 days ago (overdue)
                 monthlyFee: 40,
