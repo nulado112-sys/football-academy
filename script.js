@@ -35,11 +35,17 @@ class FootballAcademy {
         this.setupEventListeners();
         this.updateDisplay();
         this.checkPaymentReminders();
+        this.checkDailyPaymentDues(); // Check for daily dues on app load
         
         // Check for reminders every 30 minutes (reduced frequency)
         setInterval(() => {
             this.checkPaymentReminders();
         }, 1800000);
+        
+        // Daily check for due payments (runs every hour but only notifies once per day)
+        setInterval(() => {
+            this.checkDailyPaymentDues();
+        }, 3600000);
     }
 
     setupEventListeners() {
@@ -315,6 +321,113 @@ class FootballAcademy {
                 this.sendBulkWhatsAppReminders();
             }
         }
+    }
+    
+    checkDailyPaymentDues() {
+        const today = new Date();
+        const todayStr = today.toDateString();
+        const lastCheckDate = localStorage.getItem('last-daily-check');
+        
+        // Only check once per day
+        if (lastCheckDate === todayStr) {
+            return;
+        }
+        
+        localStorage.setItem('last-daily-check', todayStr);
+        
+        const todayDueMembers = [];
+        const overdueMembersToday = [];
+        
+        this.members.forEach(member => {
+            const status = this.getPaymentStatus(member);
+            const nextPayment = this.getNextPaymentDate(member);
+            const nextPaymentStr = nextPayment.toDateString();
+            
+            // Check if payment is due today
+            if (nextPaymentStr === todayStr && status.status !== 'paid') {
+                todayDueMembers.push(member);
+            }
+            
+            // Check if payment became overdue today
+            if (status.status === 'overdue' && status.daysUntilNext === 1) {
+                overdueMembersToday.push(member);
+            }
+        });
+        
+        if (todayDueMembers.length > 0 || overdueMembersToday.length > 0) {
+            this.showDailyPaymentAlert(todayDueMembers, overdueMembersToday);
+        }
+    }
+    
+    showDailyPaymentAlert(todayDue, becameOverdue) {
+        const today = new Date().toLocaleDateString();
+        let alertMessage = `🚨 DAILY PAYMENT ALERT - ${today}\n\n`;
+        
+        if (todayDue.length > 0) {
+            alertMessage += `💰 PAYMENTS DUE TODAY (${todayDue.length}):\n`;
+            todayDue.forEach(member => {
+                alertMessage += `• ${member.name} - $${member.monthlyFee} (${member.phone})\n`;
+            });
+            alertMessage += '\n';
+        }
+        
+        if (becameOverdue.length > 0) {
+            alertMessage += `🔴 BECAME OVERDUE TODAY (${becameOverdue.length}):\n`;
+            becameOverdue.forEach(member => {
+                alertMessage += `• ${member.name} - $${member.monthlyFee} (${member.phone})\n`;
+            });
+            alertMessage += '\n';
+        }
+        
+        alertMessage += `📱 Action Required:\n`;
+        alertMessage += `• Contact these members about their payment\n`;
+        alertMessage += `• Use WhatsApp reminder buttons in the app\n\n`;
+        alertMessage += `Open John Zone Academy app to send reminders?`;
+        
+        // Show browser notification
+        if ('Notification' in window && Notification.permission === 'granted') {
+            const notificationTitle = `💰 Payment Alert - ${todayDue.length + becameOverdue.length} Members`;
+            const notificationBody = `${todayDue.length} due today, ${becameOverdue.length} became overdue. Check the app!`;
+            
+            new Notification(notificationTitle, {
+                body: notificationBody,
+                icon: 'logo.svg',
+                badge: 'logo.svg',
+                tag: 'daily-payment-alert',
+                requireInteraction: true,
+                actions: [
+                    { action: 'open', title: 'Open App' },
+                    { action: 'remind-later', title: 'Remind Later' }
+                ]
+            });
+        }
+        
+        // Show alert
+        const shouldOpenApp = confirm(alertMessage);
+        if (shouldOpenApp) {
+            // Focus on the members list
+            document.getElementById('members-list').scrollIntoView({ behavior: 'smooth' });
+            
+            // Highlight overdue members
+            this.highlightDueMembers();
+        }
+    }
+    
+    highlightDueMembers() {
+        // Add visual highlighting to due/overdue members for 10 seconds
+        const memberCards = document.querySelectorAll('.member-card');
+        memberCards.forEach(card => {
+            const statusElement = card.querySelector('.payment-status');
+            if (statusElement && (statusElement.classList.contains('status-overdue') || statusElement.classList.contains('status-pending'))) {
+                card.style.animation = 'pulse 1s ease-in-out 3';
+                card.style.border = '3px solid #ff6b6b';
+                
+                setTimeout(() => {
+                    card.style.animation = '';
+                    card.style.border = '';
+                }, 10000);
+            }
+        });
     }
 
     saveMembers() {
