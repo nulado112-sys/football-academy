@@ -24,10 +24,10 @@ class FootballAcademy {
         this.updateDisplay();
         this.checkPaymentReminders();
         
-        // Check for reminders every hour
+        // Check for reminders every 30 minutes (reduced frequency)
         setInterval(() => {
             this.checkPaymentReminders();
-        }, 3600000);
+        }, 1800000);
     }
 
     setupEventListeners() {
@@ -165,7 +165,10 @@ class FootballAcademy {
             return;
         }
 
-        container.innerHTML = this.members.map(member => {
+        // Use DocumentFragment for better performance
+        const fragment = document.createDocumentFragment();
+        
+        this.members.forEach(member => {
             const status = this.getPaymentStatus(member);
             const nextPayment = this.getNextPaymentDate(member);
             
@@ -196,33 +199,41 @@ class FootballAcademy {
                     break;
             }
 
-            return `
-                <div class="member-card">
-                    <div class="member-header">
-                        <span class="member-name">${member.name}</span>
-                        <span class="payment-status ${statusClass}">${statusText}</span>
-                    </div>
-                    <div class="member-details">
-                        <div>📅 Joined: ${new Date(member.joinDate).toLocaleDateString()}</div>
-                        <div>📞 Phone: ${member.phone}</div>
-                        <div>💰 Monthly Fee: $${member.monthlyFee}</div>
-                        <div>📋 ${statusMessage}</div>
-                        <div>🗓️ Next Payment: ${nextPayment.toLocaleDateString()}</div>
-                    </div>
-                    <div class="payment-actions">
-                        ${status.status !== 'paid' ? 
-                            `<button class="btn-small btn-success" onclick="academy.markAsPaid(${member.id})">Mark as Paid</button>` : 
-                            ''
-                        }
-                        ${status.status === 'overdue' || (status.status === 'pending' && status.daysUntilNext <= 1) ? 
-                            `<button class="btn-small btn-warning" onclick="academy.sendWhatsAppReminder(${member.id})">💬 WhatsApp Reminder</button>` : 
-                            ''
-                        }
-                        <button class="btn-small btn-danger" onclick="academy.removeMember(${member.id})">Remove</button>
-                    </div>
+            // Create member card element directly (faster than innerHTML)
+            const card = document.createElement('div');
+            card.className = 'member-card';
+            
+            card.innerHTML = `
+                <div class="member-header">
+                    <span class="member-name">${member.name}</span>
+                    <span class="payment-status ${statusClass}">${statusText}</span>
+                </div>
+                <div class="member-details">
+                    <div>📅 ${new Date(member.joinDate).toLocaleDateString()}</div>
+                    <div>📞 ${member.phone}</div>
+                    <div>💰 $${member.monthlyFee}</div>
+                    <div>${statusMessage}</div>
+                    <div>Next: ${nextPayment.toLocaleDateString()}</div>
+                </div>
+                <div class="payment-actions">
+                    ${status.status !== 'paid' ? 
+                        `<button class="btn-small btn-success" onclick="academy.markAsPaid(${member.id})">✅ Paid</button>` : 
+                        ''
+                    }
+                    ${status.status === 'overdue' || (status.status === 'pending' && status.daysUntilNext <= 1) ? 
+                        `<button class="btn-small btn-warning" onclick="academy.sendWhatsAppReminder(${member.id})">📱 WhatsApp</button>` : 
+                        ''
+                    }
+                    <button class="btn-small btn-danger" onclick="academy.removeMember(${member.id})">🗑️</button>
                 </div>
             `;
-        }).join('');
+            
+            fragment.appendChild(card);
+        });
+        
+        // Clear and append all at once (more efficient)
+        container.innerHTML = '';
+        container.appendChild(fragment);
     }
 
     checkPaymentReminders() {
@@ -281,7 +292,22 @@ class FootballAcademy {
 
     loadMembers() {
         const saved = localStorage.getItem('academy-members');
-        return saved ? JSON.parse(saved) : [];
+        const members = saved ? JSON.parse(saved) : [];
+        
+        // Add demo member if no members exist
+        if (members.length === 0) {
+            const demoMember = {
+                id: 999999,
+                name: "Ahmed Demo",
+                phone: "+96171123456",
+                joinDate: new Date(Date.now() - 35 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 35 days ago (overdue)
+                monthlyFee: 40,
+                payments: []
+            };
+            members.push(demoMember);
+        }
+        
+        return members;
     }
 
     sendWhatsAppReminder(memberId) {
@@ -304,13 +330,16 @@ class FootballAcademy {
     }
     
     sendBulkWhatsAppReminders() {
-        this.members.forEach(member => {
+        const overdueMembers = this.members.filter(member => {
             const status = this.getPaymentStatus(member);
-            if (status.status === 'overdue' || (status.status === 'pending' && status.daysUntilNext <= 1)) {
-                setTimeout(() => {
-                    this.sendWhatsAppReminder(member.id);
-                }, 1000);
-            }
+            return status.status === 'overdue' || (status.status === 'pending' && status.daysUntilNext <= 1);
+        });
+        
+        // Send messages with delay to avoid overwhelming the phone
+        overdueMembers.forEach((member, index) => {
+            setTimeout(() => {
+                this.sendWhatsAppReminder(member.id);
+            }, index * 2000); // 2 second delay between each message
         });
     }
     
