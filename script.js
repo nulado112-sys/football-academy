@@ -436,15 +436,27 @@ class FootballAcademy {
 
     loadMembers() {
         const saved = localStorage.getItem('academy-members');
-        const members = saved ? JSON.parse(saved) : [];
+        let members = saved ? JSON.parse(saved) : [];
         
-        // Add demo member if no members exist
-        if (members.length === 0) {
+        // Update demo member if it exists with old data
+        const demoIndex = members.findIndex(m => m.id === 999999);
+        if (demoIndex !== -1) {
+            // Update existing demo member
+            members[demoIndex] = {
+                id: 999999,
+                name: "Jhony Moussa",
+                phone: "+96171982549",
+                joinDate: new Date(Date.now() - 35 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                monthlyFee: 40,
+                payments: []
+            };
+        } else if (members.length === 0) {
+            // Add demo member if no members exist
             const demoMember = {
                 id: 999999,
                 name: "Jhony Moussa",
                 phone: "+96171982549",
-                joinDate: new Date(Date.now() - 35 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 35 days ago (overdue)
+                joinDate: new Date(Date.now() - 35 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
                 monthlyFee: 40,
                 payments: []
             };
