@@ -429,6 +429,29 @@ class FootballAcademy {
             }
         });
     }
+    
+    testDailyNotification() {
+        // Force a daily notification test by clearing the last check date
+        localStorage.removeItem('last-daily-check');
+        
+        // Force check for daily payment dues
+        this.checkDailyPaymentDues();
+        
+        // Also show a demo alert of how notifications look
+        const demoMessage = `🚨 DAILY PAYMENT ALERT - ${new Date().toLocaleDateString()}
+
+💰 PAYMENTS DUE TODAY (1):
+• Jhony Moussa - $40 (+96171982549)
+
+📱 Action Required:
+• Contact this member about their payment
+• Use WhatsApp reminder buttons in the app
+
+This is how daily notifications work!
+Click OK to see the real notification system.`;
+        
+        alert(demoMessage);
+    }
 
     saveMembers() {
         localStorage.setItem('academy-members', JSON.stringify(this.members));
@@ -441,22 +464,30 @@ class FootballAcademy {
         // Update demo member if it exists with old data
         const demoIndex = members.findIndex(m => m.id === 999999);
         if (demoIndex !== -1) {
-            // Update existing demo member
+            // Update existing demo member with payment due TODAY
+            const today = new Date();
+            const joinDay = today.getDate(); // Use today's date as join day
+            const joinDate = new Date(today.getFullYear(), today.getMonth() - 1, joinDay); // Joined last month, so payment due today
+            
             members[demoIndex] = {
                 id: 999999,
                 name: "Jhony Moussa",
                 phone: "+96171982549",
-                joinDate: new Date(Date.now() - 35 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                joinDate: joinDate.toISOString().split('T')[0],
                 monthlyFee: 40,
                 payments: []
             };
         } else if (members.length === 0) {
-            // Add demo member if no members exist
+            // Add demo member if no members exist with payment due TODAY
+            const today = new Date();
+            const joinDay = today.getDate(); // Use today's date as join day
+            const joinDate = new Date(today.getFullYear(), today.getMonth() - 1, joinDay); // Joined last month, so payment due today
+            
             const demoMember = {
                 id: 999999,
                 name: "Jhony Moussa",
                 phone: "+96171982549",
-                joinDate: new Date(Date.now() - 35 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                joinDate: joinDate.toISOString().split('T')[0],
                 monthlyFee: 40,
                 payments: []
             };
