@@ -140,7 +140,7 @@ class FootballAcademy {
             
             // Send receipt via WhatsApp automatically
             this.sendReceiptViaWhatsApp(member, paymentDate, receiptNumber);
-            alert(`Payment recorded for ${member.name}. Receipt sent via WhatsApp!`);
+            alert(`Payment recorded for ${member.name}.\n📷 Photo receipt downloaded!\n📱 WhatsApp opened to send receipt.`);
         }
     }
 
@@ -341,27 +341,149 @@ class FootballAcademy {
         return members;
     }
 
-    sendReceiptViaWhatsApp(member, paymentDate, receiptNumber) {
-        const receiptMessage = `🧾 JOHN ZONE FOOTBALL ACADEMY - RECEIPT
-
+    async generateReceiptImage(member, paymentDate, receiptNumber) {
+        // Create canvas for receipt
+        const canvas = document.createElement('canvas');
+        canvas.width = 600;
+        canvas.height = 800;
+        const ctx = canvas.getContext('2d');
+        
+        // Background
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, 600, 800);
+        
+        // Border
+        ctx.strokeStyle = '#5cb85c';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(20, 20, 560, 760);
+        
+        // Header background
+        ctx.fillStyle = '#5cb85c';
+        ctx.fillRect(20, 20, 560, 120);
+        
+        // John Zone text
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 36px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('JOHN ZONE', 300, 80);
+        ctx.font = 'bold 24px Arial';
+        ctx.fillText('FOOTBALL ACADEMY', 300, 110);
+        
+        // Receipt title
+        ctx.fillStyle = '#5cb85c';
+        ctx.font = 'bold 32px Arial';
+        ctx.fillText('PAYMENT RECEIPT', 300, 180);
+        
+        // Receipt details
+        ctx.fillStyle = '#333333';
+        ctx.font = '20px Arial';
+        ctx.textAlign = 'left';
+        
+        const details = [
+            { label: 'Receipt #:', value: receiptNumber },
+            { label: 'Date:', value: new Date(paymentDate).toLocaleDateString() },
+            { label: 'Time:', value: new Date().toLocaleTimeString() },
+            { label: '', value: '' }, // spacer
+            { label: 'Member Name:', value: member.name },
+            { label: 'Phone:', value: member.phone },
+            { label: 'Monthly Fee:', value: `$${member.monthlyFee}` },
+            { label: 'Period:', value: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) },
+            { label: '', value: '' }, // spacer
+            { label: 'AMOUNT PAID:', value: `$${member.monthlyFee}` }
+        ];
+        
+        let yPos = 230;
+        details.forEach(detail => {
+            if (detail.label === '' && detail.value === '') {
+                yPos += 20;
+                return;
+            }
+            
+            if (detail.label === 'AMOUNT PAID:') {
+                ctx.font = 'bold 28px Arial';
+                ctx.fillStyle = '#5cb85c';
+            } else {
+                ctx.font = '20px Arial';
+                ctx.fillStyle = '#333333';
+            }
+            
+            ctx.fillText(detail.label, 60, yPos);
+            ctx.fillText(detail.value, 250, yPos);
+            yPos += 35;
+        });
+        
+        // Payment confirmed
+        yPos += 30;
+        ctx.fillStyle = '#28a745';
+        ctx.font = 'bold 24px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('✅ PAYMENT CONFIRMED', 300, yPos);
+        
+        // Thank you message
+        yPos += 50;
+        ctx.fillStyle = '#333333';
+        ctx.font = '18px Arial';
+        ctx.fillText('Thank you for your payment!', 300, yPos);
+        
+        // Footer
+        yPos += 80;
+        ctx.fillStyle = '#5cb85c';
+        ctx.font = 'bold 20px Arial';
+        ctx.fillText('John Zone Football Academy', 300, yPos);
+        yPos += 30;
+        ctx.font = '16px Arial';
+        ctx.fillText('Building Champions, Creating Futures', 300, yPos);
+        
+        return canvas.toDataURL('image/png');
+    }
+    
+    async sendReceiptViaWhatsApp(member, paymentDate, receiptNumber) {
+        try {
+            // Generate receipt image
+            const receiptImageData = await this.generateReceiptImage(member, paymentDate, receiptNumber);
+            
+            // Create download link for the receipt
+            const link = document.createElement('a');
+            link.download = `Receipt_${member.name}_${receiptNumber}.png`;
+            link.href = receiptImageData;
+            link.click();
+            
+            // Simple message for WhatsApp (since we can't send images directly via URL)
+            const message = `🧾 Payment Receipt from John Zone Football Academy
+            
 Receipt #: ${receiptNumber}
+Member: ${member.name}
+Amount: $${member.monthlyFee}
 Date: ${new Date(paymentDate).toLocaleDateString()}
-Time: ${new Date().toLocaleTimeString()}
-
-👤 Member: ${member.name}
-💰 Amount Paid: $${member.monthlyFee}
-📅 Period: ${new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
 
 ✅ Payment Confirmed
 Thank you for your payment!
 
-⚽ John Zone Football Academy
-Building Champions, Creating Futures`;
+📷 Receipt image downloaded to your device - please attach it to this WhatsApp conversation.`;
+            
+            const phoneNumber = member.phone.replace(/[^0-9]/g, '');
+            const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+            
+            window.open(whatsappUrl, '_blank');
+            
+        } catch (error) {
+            console.error('Error generating receipt:', error);
+            // Fallback to text receipt
+            const receiptMessage = `🧾 JOHN ZONE FOOTBALL ACADEMY - RECEIPT
 
-        const phoneNumber = member.phone.replace(/[^0-9]/g, '');
-        const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(receiptMessage)}`;
-        
-        window.open(whatsappUrl, '_blank');
+Receipt #: ${receiptNumber}
+Date: ${new Date(paymentDate).toLocaleDateString()}
+Member: ${member.name}
+Amount Paid: $${member.monthlyFee}
+
+✅ Payment Confirmed
+Thank you!`;
+
+            const phoneNumber = member.phone.replace(/[^0-9]/g, '');
+            const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(receiptMessage)}`;
+            
+            window.open(whatsappUrl, '_blank');
+        }
     }
 
     sendWhatsAppReminder(memberId) {
