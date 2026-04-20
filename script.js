@@ -8,7 +8,17 @@ class FootballAcademy {
 
     checkAccess() {
         const password = localStorage.getItem('academy-password');
-        if (!password) {
+        const expiry = localStorage.getItem('academy-password-expiry');
+        
+        // Check if password has expired first
+        if (expiry && Date.now() > parseInt(expiry)) {
+            localStorage.removeItem('academy-password');
+            localStorage.removeItem('academy-password-expiry');
+        }
+        
+        // Check if password is verified and valid
+        const validPassword = localStorage.getItem('academy-password');
+        if (!validPassword || validPassword !== 'verified') {
             const userPassword = prompt('Enter password to access Football Academy:');
             if (userPassword !== 'academy123') {
                 alert('Wrong password! Access denied.');
@@ -16,6 +26,8 @@ class FootballAcademy {
                 return;
             }
             localStorage.setItem('academy-password', 'verified');
+            // Set expiry for 180 days (6 months) - much longer
+            localStorage.setItem('academy-password-expiry', Date.now() + (180 * 24 * 60 * 60 * 1000));
         }
     }
 
@@ -116,16 +128,19 @@ class FootballAcademy {
         const member = this.members.find(m => m.id === memberId);
         if (member) {
             const paymentDate = new Date().toISOString().split('T')[0];
+            const receiptNumber = `JZ-${Date.now()}`;
+            
             member.payments.push({
                 date: paymentDate,
-                amount: member.monthlyFee
+                amount: member.monthlyFee,
+                receiptNumber: receiptNumber
             });
             this.saveMembers();
             this.updateDisplay();
             
-            // Generate and send receipt
-            this.generateReceipt(member, paymentDate);
-            alert(`Payment recorded for ${member.name}. Receipt ready!`);
+            // Send receipt via WhatsApp automatically
+            this.sendReceiptViaWhatsApp(member, paymentDate, receiptNumber);
+            alert(`Payment recorded for ${member.name}. Receipt sent via WhatsApp!`);
         }
     }
 
@@ -279,7 +294,23 @@ class FootballAcademy {
         
         // Show notification to send WhatsApp messages
         if (reminders.length > 0) {
-            const shouldSend = confirm(`${reminders.length} members need payment reminders. Send WhatsApp notifications now?`);
+            // Create a more prominent notification
+            const notificationTitle = `💰 Payment Alerts - John Zone Academy`;
+            const notificationBody = `${reminders.length} members need payment reminders:\n${reminders.slice(0, 3).join('\n')}${reminders.length > 3 ? '\n...and more' : ''}`;
+            
+            // Show browser notification first
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification(notificationTitle, {
+                    body: notificationBody,
+                    icon: 'logo.svg',
+                    badge: 'logo.svg',
+                    tag: 'payment-reminders',
+                    requireInteraction: true
+                });
+            }
+            
+            // Show alert with better formatting
+            const shouldSend = confirm(`🚨 PAYMENT REMINDERS NEEDED\n\n${notificationBody}\n\nSend WhatsApp reminders now?`);
             if (shouldSend) {
                 this.sendBulkWhatsAppReminders();
             }
@@ -308,6 +339,29 @@ class FootballAcademy {
         }
         
         return members;
+    }
+
+    sendReceiptViaWhatsApp(member, paymentDate, receiptNumber) {
+        const receiptMessage = `🧾 JOHN ZONE FOOTBALL ACADEMY - RECEIPT
+
+Receipt #: ${receiptNumber}
+Date: ${new Date(paymentDate).toLocaleDateString()}
+Time: ${new Date().toLocaleTimeString()}
+
+👤 Member: ${member.name}
+💰 Amount Paid: $${member.monthlyFee}
+📅 Period: ${new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+
+✅ Payment Confirmed
+Thank you for your payment!
+
+⚽ John Zone Football Academy
+Building Champions, Creating Futures`;
+
+        const phoneNumber = member.phone.replace(/[^0-9]/g, '');
+        const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(receiptMessage)}`;
+        
+        window.open(whatsappUrl, '_blank');
     }
 
     sendWhatsAppReminder(memberId) {
@@ -343,6 +397,37 @@ class FootballAcademy {
         });
     }
     
+    sendReceiptViaWhatsApp(member, paymentDate, receiptNumber) {
+        const receiptText = `🧾 *JOHN ZONE FOOTBALL ACADEMY*
+*PAYMENT RECEIPT*
+
+📋 Receipt #: ${receiptNumber}
+📅 Date: ${new Date(paymentDate).toLocaleDateString()}
+⏰ Time: ${new Date().toLocaleTimeString()}
+
+👤 *Member Details:*
+Name: ${member.name}
+Phone: ${member.phone}
+Join Date: ${new Date(member.joinDate).toLocaleDateString()}
+
+💰 *Payment Details:*
+Description: Monthly Training Fee
+Period: ${new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+*Amount Paid: $${member.monthlyFee}*
+
+✅ Payment Status: PAID
+Thank you for your payment!
+
+⚽ John Zone Football Academy
+Building Champions, Creating Futures`;
+
+        const phoneNumber = member.phone.replace(/[^0-9]/g, '');
+        const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(receiptText)}`;
+        
+        // Auto-open WhatsApp with receipt
+        window.open(whatsappUrl, '_blank');
+    }
+
     generateReceipt(member, paymentDate) {
         const receiptContent = `
             <div style="max-width: 400px; margin: 20px auto; padding: 20px; border: 2px solid #5cb85c; font-family: Arial, sans-serif;">
