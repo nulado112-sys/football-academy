@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Football Academy Manager</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>⚽ Football Academy</h1>
+            <p>Member & Payment Manager</p>
+        </header>
+
+        <div class="stats">
+            <div class="stat-card">
+                <h3 id="total-members">0</h3>
+                <p>Total Members</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="pending-payments">0</h3>
+                <p>Pending Payments</p>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Add New Member</h2>
+            <form id="member-form">
+                <input type="text" id="member-name" placeholder="Member Name" required>
+                <input type="date" id="join-date" required>
+                <input type="number" id="monthly-fee" placeholder="Monthly Fee" required>
+                <button type="submit">Add Member</button>
+            </form>
+        </div>
+
+        <div class="section">
+            <h2>Members & Payments</h2>
+            <div id="members-list"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
