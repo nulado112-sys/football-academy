@@ -434,23 +434,75 @@ class FootballAcademy {
         // Force a daily notification test by clearing the last check date
         localStorage.removeItem('last-daily-check');
         
+        // Request notification permission first
+        if ('Notification' in window) {
+            if (Notification.permission === 'default') {
+                Notification.requestPermission().then(permission => {
+                    if (permission === 'granted') {
+                        this.showTestNotifications();
+                    } else {
+                        alert('Please allow notifications to test the alert system!');
+                    }
+                });
+            } else if (Notification.permission === 'granted') {
+                this.showTestNotifications();
+            } else {
+                alert('Notifications are blocked. Please enable them in your browser settings.');
+            }
+        } else {
+            alert('Your browser does not support notifications.');
+        }
+    }
+    
+    showTestNotifications() {
+        // Show browser notification
+        new Notification('💰 John Zone Academy - Payment Alert!', {
+            body: 'Jhony Moussa has a payment due today ($40). Check the app to send reminder.',
+            icon: 'logo.svg',
+            badge: 'logo.svg',
+            tag: 'test-notification',
+            requireInteraction: true
+        });
+        
         // Force check for daily payment dues
         this.checkDailyPaymentDues();
         
-        // Also show a demo alert of how notifications look
-        const demoMessage = `🚨 DAILY PAYMENT ALERT - ${new Date().toLocaleDateString()}
+        // Show the exact client message demo
+        const clientMessage = `Hello! This is from John Zone Football Academy.
 
-💰 PAYMENTS DUE TODAY (1):
-• Jhony Moussa - $40 (+96171982549)
+You have a payment due today of $40. Please make your payment as soon as possible.
 
-📱 Action Required:
-• Contact this member about their payment
-• Use WhatsApp reminder buttons in the app
+If you have already paid, please ignore this message.
 
-This is how daily notifications work!
-Click OK to see the real notification system.`;
+Thank you for being part of John Zone Academy!
+
+⚽ Building Champions, Creating Futures`;
         
-        alert(demoMessage);
+        // Show admin alert first
+        const adminMessage = `🚨 NOTIFICATION TEST SUCCESSFUL!
+
+📱 YOU (Admin) just received:
+- Browser notification at top of screen
+- This alert about payment due
+
+💬 JHONY MOUSSA (Client) would receive this message:
+"${clientMessage}"
+
+Click OK to test sending this message via WhatsApp to +96171982549`;
+        
+        const shouldTestWhatsApp = confirm(adminMessage);
+        
+        if (shouldTestWhatsApp) {
+            // Test sending the client message via WhatsApp
+            this.sendTestClientMessage(clientMessage);
+        }
+    }
+    
+    sendTestClientMessage(message) {
+        const whatsappUrl = `https://wa.me/96171982549?text=${encodeURIComponent(message)}`;
+        window.open(whatsappUrl, '_blank');
+        
+        alert('✅ WhatsApp opened!\n\nThe message has been sent to +961 71 982 549.\nCheck your phone to see exactly what clients receive when they miss payments!');
     }
 
     saveMembers() {
